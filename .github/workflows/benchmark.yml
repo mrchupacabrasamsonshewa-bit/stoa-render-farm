@@ -1,0 +1,45 @@
+name: 4-Shard Cycles CPU Benchmark
+
+on:
+  workflow_dispatch:
+
+jobs:
+  render-shard:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - shard: 1
+            start: 1
+            end: 60
+          - shard: 2
+            start: 61
+            end: 120
+          - shard: 3
+            start: 121
+            end: 180
+          - shard: 4
+            start: 181
+            end: 240
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Download Blender 4.2 LTS (Headless Linux)
+        run: |
+          wget -q https://download.blender.org/release/Blender4.2/blender-4.2.19-linux-x64.tar.xz
+          tar -xf blender-4.2.19-linux-x64.tar.xz
+          mv blender-4.2.19-linux-x64 blender
+
+      - name: Run Cycles CPU Render Shard
+        run: |
+          ./blender/blender -b -P benchmark_scene.py -- ${{ matrix.start }} ${{ matrix.end }} ${{ matrix.shard }}
+
+      - name: Upload Shard Frames
+        uses: actions/upload-artifact@v4
+        with:
+          name: shard-${{ matrix.shard }}
+          path: /tmp/shard_${{ matrix.shard }}_frame_*.png
+          
